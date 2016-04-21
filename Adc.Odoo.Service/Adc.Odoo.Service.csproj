@@ -48,6 +48,8 @@
     <Compile Include="Infrastructure\Extensions\ExtensionsForOdooService.cs" />
     <Compile Include="Infrastructure\Extensions\ExtensionsForType.cs" />
     <Compile Include="Infrastructure\Factories\OdooObjectFactory.cs" />
+    <Compile Include="Infrastructure\Interfaces\IOdooConverter.cs" />
+    <Compile Include="Models\OdooObject.cs" />
     <Compile Include="Models\OdooFilter.cs" />
     <Compile Include="Models\OdooSorter.cs" />
     <Compile Include="Models\ResultSet.cs" />

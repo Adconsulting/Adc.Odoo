@@ -5,6 +5,7 @@ using CookComputing.XmlRpc;
 
 namespace Adc.Odoo.Service.Infrastructure.Exceptions
 {
+    [Serializable]
     public class OdooException : Exception
     {
         public OdooException()

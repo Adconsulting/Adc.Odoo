@@ -55,6 +55,10 @@ namespace Adc.Odoo.Service.Infrastructure.Factories
                 .GetProperties()
                 .Where(p => p.GetCustomAttributes(typeof(OdooMapAttribute), true).Any());
 
+            var fkProps = obj.GetType()
+                           .GetProperties()
+                           .Where(p => p.GetCustomAttributes(typeof(OdooForeignKeyAttribute), true).Any());
+
             foreach (var propertyInfo in props)
             {
                 var info = propertyInfo.GetCustomAttribute<OdooMapAttribute>();
@@ -69,10 +73,64 @@ namespace Adc.Odoo.Service.Infrastructure.Factories
                     }
                     else if (response as object[] != null)
                     {
-                        value = (response as object[]).Length > 0 ? (response as object[])[0] : null;
-                    } else if (response as int[] != null)
+                        var val = (response as object[]).Length > 0 ? (response as object[])[0] : null;
+                        //CHECK FOR FK MAPPING
+                        var fkProp = fkProps.FirstOrDefault(
+                            x => x.GetCustomAttribute<OdooForeignKeyAttribute>()
+                                     .PropertyName == info.OdooName);
+                        if (fkProp != null)
+                        {
+                            if (val != null)
+                            {
+
+                                var type = typeof(OdooObject<>).MakeGenericType(fkProp.PropertyType);
+                                var @object = Activator.CreateInstance(type, service, val);
+                                var fkval = @object.GetType()
+                                    .GetMethod("GetObject")
+                                    .Invoke(@object, null);
+                                if (fkval != null)
+                                    fkProp.SetValue(obj, fkval);
+                            }
+                            else
+                            {
+                                value = null;
+                            }
+
+                        }
+
+                        if (propertyInfo.PropertyType == typeof(int) || propertyInfo.PropertyType == typeof(int?))
+                        {
+                            value = val;
+                        }
+                        else
+                        {
+                            if (val != null)
+                            {
+                                var type = typeof(OdooObject<>).MakeGenericType(propertyInfo.PropertyType);
+                                var @object = Activator.CreateInstance(type, service, val);
+                                value = @object.GetType()
+                                    .GetMethod("GetObject")
+                                    .Invoke(@object, null);
+                            }
+                            else
+                            {
+                                value = null;
+                            }
+                        }
+                    }
+                    else if (response as int[] != null)
                     {
-                        value = response;
+                        var attibute = propertyInfo.PropertyType.GenericTypeArguments.First()
+                            .CustomAttributes.FirstOrDefault(x => x.AttributeType == typeof(OdooMapAttribute));
+                        if (attibute != null)
+                        {
+                            var type = typeof(OdooCollection<>).MakeGenericType(propertyInfo.PropertyType.GetGenericArguments());
+                            value = Activator.CreateInstance(type, service, response);
+                        }
+                        else
+                        {
+                            value = response;
+                        }
                     }
                     else
                     {
@@ -108,13 +166,12 @@ namespace Adc.Odoo.Service.Infrastructure.Factories
                                 break;
                         }
                     }
-
-
                     propertyInfo.SetValue(obj, value);
                 }
                 else
                 {
-                    throw new OdooException(string.Format("Field {0} not found in server response", info.OdooName));
+                    //throw new OdooException(string.Format("Field {0} not found in server response", info.OdooName));
+                    propertyInfo.SetValue(obj, null);
                 }
 
             }
@@ -135,99 +192,6 @@ namespace Adc.Odoo.Service.Infrastructure.Factories
 
             }
         }
-
-
-
-        /*
-
-                public static T BuildEntity<T>(OdooService service, XmlRpcStruct xmlStruct) where T : IOdooObject, new()
-                {
-                    T entity = new T();
-                    foreach (DictionaryEntry item in xmlStruct)
-                    {
-                        PropertyInfo property = GetPropertyFromEntity<T>(item.Key as string);
-                        if (property != null)
-                        {
-                            object value = item.Value;
-                            if (IsOdooNull(item.Value))
-                            {
-                                //If is a basic type this throws an exception
-                                value = null;
-                            }
-                            else if (property.PropertyType.IsGenericCollection())
-                            {
-                                //Create a collection of entities
-                                Type type = typeof(OdooCollection<>).MakeGenericType(property.PropertyType.GetGenericArguments());
-                                value = Activator.CreateInstance(type, service, item.Value);
-                            }
-                            else
-                            {
-                                var attibute = (OdooMapAttribute)property.GetCustomAttributes(typeof(OdooMapAttribute), false).FirstOrDefault();
-                                if (attibute != null)
-                                {
-                                    switch (attibute.OdooType)
-                                    {
-                                        case OdooType.Char:
-                                            if (property.Name.Equals("DateTime"))
-                                            {
-                                                value = DateTime.ParseExact(item.Value.ToString(), "yyyy-MM-dd HH:mm:ss", System.Threading.Thread.CurrentThread.CurrentCulture);
-                                            }
-                                            break;
-                                        case OdooType.Text:
-                                            break;
-                                        case OdooType.Date:
-                                            value = DateTime.ParseExact(item.Value.ToString(), "yyyy-MM-dd", System.Threading.Thread.CurrentThread.CurrentCulture);
-                                            break;
-                                        case OdooType.Datetime:
-                                            value = DateTime.ParseExact(item.Value.ToString(), "yyyy-MM-dd HH:mm:ss", System.Threading.Thread.CurrentThread.CurrentCulture);
-                                            break;
-                                        default:
-                                            value = item.Value;
-                                            break;
-                                    }
-                                }
-                            }
-                            //check if is a object. Load related entity.
-                            if (value as object[] != null)
-                            {
-                                if ((value as object[]).Length > 0)
-                                {
-                                    value = (value as object[])[0]; //id of related entity
-                                }
-                                else
-                                {
-                                    value = null;
-                                }
-                            }
-                            //Asign value directly
-                            property.SetValue(entity, value, null);
-                        }
-                    }
-                    return entity;
-                }
-        */
-        /*
-
-                public static PropertyInfo GetPropertyFromEntity<T>(string key)
-                {
-                    var type = typeof(T);
-                    var property = type.GetProperties().FirstOrDefault(p => p.Name.Equals(key));
-                    if (property == null)
-                    {
-                        property = type.GetProperties()
-                                        .FirstOrDefault(p =>
-                                            p.GetCustomAttributes(typeof(OdooMapAttribute), false)
-                                                .Cast<OdooMapAttribute>().Count(e => e.OdooName.Equals(key)) == 1);
-                    }
-                    return property;
-                }
-
-                public static OdooType GetOpenErpType(PropertyInfo property)
-                {
-                    var attributes = (OdooMapAttribute[])property.GetCustomAttributes(typeof(OdooMapAttribute), false);
-                    return attributes.Length > 0 ? attributes[0].OdooType : OdooType.Undefined;
-                }
-        */
 
         /// <summary>
         /// Checks for a null value from OpenErp.

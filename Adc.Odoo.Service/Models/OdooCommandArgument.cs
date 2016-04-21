@@ -65,5 +65,7 @@ namespace Adc.Odoo.Service.Models
         public OdooType ArgumentType { get; set; }
 
         public int Order { get; set; }
+
+        public bool ReadOnly { get; set; }
     }
 }

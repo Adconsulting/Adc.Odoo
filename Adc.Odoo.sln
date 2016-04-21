@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Verbeke.Engineering.Odoo.Service", "Adc.Odoo.Service\Verbeke.Engineering.Odoo.Service.csproj", "{8D39482B-2195-44BA-AC72-3C64E069A910}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Adc.Odoo.Service", "Adc.Odoo.Service\Adc.Odoo.Service.csproj", "{8D39482B-2195-44BA-AC72-3C64E069A910}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Adc.Odoo.Tests", "Adc.Odoo.Tests\Adc.Odoo.Tests.csproj", "{3EAF1D1D-4111-455C-8076-9AEA320A0FAE}"
 EndProject

@@ -2,6 +2,7 @@
 
 namespace Adc.Odoo.Service.Infrastructure.Exceptions
 {
+    [Serializable]
     public class OdooAuthenticationException : OdooException
     {
         public OdooAuthenticationException()

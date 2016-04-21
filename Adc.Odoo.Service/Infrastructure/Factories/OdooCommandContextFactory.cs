@@ -46,7 +46,7 @@ namespace Adc.Odoo.Service.Infrastructure.Factories
                         }
 
                         var operation = initialExpression as BinaryExpression;
-                            
+
 
                         if (operation.Right is MethodCallExpression)
                         {
@@ -57,6 +57,7 @@ namespace Adc.Odoo.Service.Infrastructure.Factories
                             ProcessBinaryExpression(operation.Right as BinaryExpression, context, counter);
                         }
                         initialExpression = operation.Left as BinaryExpression;
+                        if (initialExpression == null) initialExpression = operation.Left as MethodCallExpression;
                     }
                     else
                     {
@@ -112,9 +113,11 @@ namespace Adc.Odoo.Service.Infrastructure.Factories
                     argument.ArgumentType = attributes[0].OdooType;
                     argument.Value = property.GetValue(entity, null);
                     argument.Operation = "=";
+                    argument.ReadOnly = attributes[0].ReadOnly;
                     if (argument.Value == null)
                     {
                         argument.Value = false;
+
                     }
                     context.Arguments.Add(argument);
                 }
@@ -188,6 +191,10 @@ namespace Adc.Odoo.Service.Infrastructure.Factories
                 case ExpressionType.Equal:
                     argument.Operation = "=";
                     break;
+                case ExpressionType.NotEqual:
+                    argument.Operation = "!=";
+
+                    break;
             }
             context.Arguments.Add(argument);
         }
@@ -208,7 +215,14 @@ namespace Adc.Odoo.Service.Infrastructure.Factories
 
         private static void SetProperty(Expression expression, OdooCommandContext context, OdooCommandArgument argument)
         {
+
+            if (expression == null)
+            {
+                return;
+            }
+
             argument.Property = string.Empty;
+
             switch (expression.NodeType)
             {
                 case ExpressionType.Call:
@@ -232,6 +246,10 @@ namespace Adc.Odoo.Service.Infrastructure.Factories
                             argument.ArgumentType = GetOdooPropertyType(memberAccess as MemberExpression);
                         }
                     }
+                    else
+                    {
+
+                    }
                     break;
                 case ExpressionType.Constant:
                     argument.Property = (expression as ConstantExpression).Value.ToString();
@@ -252,6 +270,10 @@ namespace Adc.Odoo.Service.Infrastructure.Factories
 
         private static object GetValue(Expression expression, OdooCommandContext context)
         {
+
+            if (expression == null)
+                return null;
+
             object res = null;
             switch (expression.NodeType)
             {
@@ -262,7 +284,8 @@ namespace Adc.Odoo.Service.Infrastructure.Factories
                     {
                         foreach (Expression item in methodCall.Arguments)
                         {
-                            res = GetValue(item, context);
+                            var tmp = GetValue(item, context);
+                            if (tmp != null) res = tmp;
                         }
                     }
                     break;
@@ -305,10 +328,21 @@ namespace Adc.Odoo.Service.Infrastructure.Factories
                         }
                         else
                         {
-                            var objectMember = Expression.Convert(memberAccess, typeof(object));
-                            var getterLambda = Expression.Lambda<Func<object>>(objectMember);
-                            var getter = getterLambda.Compile();
-                            res = getter();
+                            if (memberAccess.Member.GetCustomAttributes(typeof(OdooMapAttribute))
+                                .Any())
+                            {
+
+                            }
+                            else
+                            {
+                                var objectMember = Expression.Convert(memberAccess, typeof(object));
+
+                                var getterLambda = Expression.Lambda<Func<object>>(objectMember);
+                                var getter = getterLambda.Compile();
+                                res = getter();
+                            }
+
+
                         }
                     }
                     break;

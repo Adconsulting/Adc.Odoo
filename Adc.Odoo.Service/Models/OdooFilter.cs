@@ -11,7 +11,7 @@ namespace Adc.Odoo.Service.Models
 
         public OdooFilter()
         {
-            
+
         }
 
         public OdooFilter(Expression<Func<T, bool>> filter)
@@ -22,10 +22,13 @@ namespace Adc.Odoo.Service.Models
         /// <summary>
         /// Gets or Sets the Filter
         /// </summary> 
-        public Expression<Func<T, bool>> Filter { get
+        public Expression<Func<T, bool>> Filter
         {
-            return _filter;
-        } }
+            get
+            {
+                return _filter;
+            }
+        }
 
         public static OdooFilter<T> Where(Expression<Func<T, bool>> filter)
         {
