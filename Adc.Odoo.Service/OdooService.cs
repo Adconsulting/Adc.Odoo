@@ -136,19 +136,28 @@ namespace Adc.Odoo.Service
 
         internal IEnumerable<T> GetEntities<T>(Expression<Func<T, bool>> conditions, int? offset = null, int? limit = null, string order = null) where T : IOdooObject, new()
         {
-            OdooCommandContext context;
-            context = OdooCommandContextFactory.BuildCommandContextFromExpression<T>(conditions);
-            context.Limit = limit ?? 0;
-            context.Offset = offset ?? 0;
-            context.Order = order;
-            IEnumerable<object> ids = SearchCommand(context);
-            context.ClearArguments();
-            ResultSet result = GetEntityCommand(context, ids);
-            IEnumerable<T> entities = OdooObjectFactory.BuildEntities<T>(this, result);
-            return entities;
+            try
+            {
+                OdooCommandContext context;
+                context = OdooCommandContextFactory.BuildCommandContextFromExpression<T>(conditions);
+                context.Limit = limit ?? 0;
+                context.Offset = offset ?? 0;
+                context.Order = order;
+                IEnumerable<object> ids = SearchCommand(context);
+                context.ClearArguments();
+                ResultSet result = GetEntityCommand(context, ids);
+                IEnumerable<T> entities = OdooObjectFactory.BuildEntities<T>(this, result);
+                return entities;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+
         }
 
-        internal IEnumerable GetEntities(OdooCommandContext context)
+
+        public IEnumerable GetEntities(OdooCommandContext context)
         {
             ResultSet resultset;
             IEnumerable<object> ids;
@@ -257,9 +266,12 @@ namespace Adc.Odoo.Service
             XmlRpcStruct fields = new XmlRpcStruct();
             foreach (OdooCommandArgument argument in context.Arguments)
             {
-                if (!argument.Property.Equals("id"))
+                if (!argument.ReadOnly)
                 {
-                    fields.Add(argument.Property, argument.Value);
+                    if (!argument.Property.Equals("id"))
+                    {
+                        fields.Add(argument.Property, argument.Value);
+                    }
                 }
             }
             try
@@ -338,7 +350,7 @@ namespace Adc.Odoo.Service
             }
         }
 
-        internal ResultSet GetEntityCommand(OdooCommandContext commandContext, IEnumerable<object> ids)
+        public ResultSet GetEntityCommand(OdooCommandContext commandContext, IEnumerable<object> ids)
         {
             _context.UserId = Login();
 

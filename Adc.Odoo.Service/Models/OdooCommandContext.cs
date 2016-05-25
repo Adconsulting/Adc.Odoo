@@ -47,7 +47,7 @@ namespace Adc.Odoo.Service.Models
         public object[] GetArguments()
         {
             var objectList = new List<object>();
-           
+
             foreach (OdooCommandArgument argument in _arguments.Where(x => x.CompareType != "|").OrderBy(x => x.Order))
             {
                 objectList.Add(new[] { argument.Property, argument.Operation, argument.Value });
@@ -58,8 +58,8 @@ namespace Adc.Odoo.Service.Models
                 var list = new List<object>();
                 list.Add("|");
                 list.AddRange(objectList);
-                
-                return list.ToArray() ;
+
+                return list.ToArray();
                 //return new []{list.ToArray()};
 
                 //objectList.Add(new[] { _arguments.First(x => x.CompareType == "|").CompareType });

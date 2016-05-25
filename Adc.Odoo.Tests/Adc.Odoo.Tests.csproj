@@ -61,9 +61,9 @@
     <Content Include="BaseTests\README.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Adc.Odoo.Service\Verbeke.Engineering.Odoo.Service.csproj">
+    <ProjectReference Include="..\Adc.Odoo.Service\Adc.Odoo.Service.csproj">
       <Project>{8D39482B-2195-44BA-AC72-3C64E069A910}</Project>
-      <Name>Verbeke.Engineering.Odoo.Service</Name>
+      <Name>Adc.Odoo.Service</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />
